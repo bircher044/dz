@@ -56,14 +56,18 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
 
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
+
         emit Approval(msg.sender, spender, tokens);
+        
         return true;
     }
 
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
+
         emit Transfer(msg.sender, to, tokens);
+
         return true;
     }
 
