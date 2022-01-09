@@ -1,25 +1,12 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-abstract contract ERC20Interface {
+import "./SafeMath.sol";
 
+abstract contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
-
-// 
-// проверяем не выйдем ли мы за ограничение типа 
-// 
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a); c = a - b; } function safeMul(uint a, uint b) public pure returns (uint c) { c = a * b; require(a == 0 || c / a == b); } function safeDiv(uint a, uint b) public pure returns (uint c) { require(b > 0);
-        c = a / b;
-    }
-}
-
 
 contract erc20RedDuck is ERC20Interface, SafeMath {
     string public name;  // название монеты
@@ -90,9 +77,9 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
 
     function callvote(uint new_price) public returns (bool success) {
         require(balances[msg.sender] >= _totalSupply/20, "Your balance is too low to start voiting."); //чтобы вызвать голосование надо хотя бы 5 процентов от эмиссии
-        require(voting_end < block.timestamp, "Another voiting already started"); //проверяем, нет ли уже запущенного голосования
+        require(voting_end < block.timestamp, "Another voting is already started"); //проверяем, нет ли уже запущенного голосования
 
-        voting_end = block.timestamp + (voting_duration * 1 minutes);  //последняя минута голосования
+        voting_end = block.timestamp + voting_duration;  //последняя минута голосования
         voting_summ = 0; //при запуске голосования голоса обнуляем
         possible_price = new_price; // запоминаем за что голосуем
         voting_id++; //считаем текущий номер голосования
@@ -104,7 +91,7 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
         if(block.timestamp > voting_end) //если время на голосование уже вышло, но оно по какой-то причине не остановилось, остановим при следующей попытке голоса
         stopvoting();
 
-        require(block.timestamp < voting_end, "The voiting has been ended."); //не поздно ли голосуем
+        require(block.timestamp < voting_end, "The voting has been ended."); //не поздно ли голосуем
         require(!is_voted[msg.sender][voting_id], "You have already voited."); //не голосовал ли этот кошелёк в этом голосовании
 
         is_voted[msg.sender][voting_id] = true; //теперь проголосовал
@@ -113,18 +100,18 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
         return true;
     }
 
-    function stopvoting() public returns (bool success){  //эту функцию вызываем мы сами с помощью  ровно через 50 минут после начала голосования ()
-        require(voting_end <= block.timestamp, "The voiting should stop later"); //не рано ли запустили (ну а вдруг)
+    function stopvoting() public returns (bool success){  //эту функцию вызываем мы сами с помощью ether.js ровно через 50 минут после начала голосования
+        require(voting_end < block.timestamp, "The voting should stop later"); //не рано ли запустили (ну а вдруг)
         require(msg.sender == owner, "You have not permission to stop voiting"); //никто кроме создателя останавливать не может
 
-        if(voting_summ > 0 )  //если вес голосов "за" больше то меняем текущую цену монеты
+        if(voting_summ >= 0 )  //если вес голосов "за" больше то меняем текущую цену монеты
         coin_price = possible_price;
         
         return true;
     }
 
     function buy() external payable {
-        uint256 _cost = msg.value * coin_price; // сколько олексииума стоит отправленный эфир 
+        uint256 _cost = msg.value * coin_price; // сколько олексириума стоит отправленный эфир 
         if(_cost > balances[owner]){
             payable(msg.sender).transfer(msg.value); // если на нашем кошельке недостаточно денег чтобы оплатить покупку - возвращаем эфир отправителю
         }
