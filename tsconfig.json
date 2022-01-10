@@ -1,4 +1,4 @@
-/*{
+{
     "compilerOptions": {
       "target": "es2018",
       "module": "commonjs",
@@ -8,4 +8,4 @@
     },
     "include": ["./scripts", "./test"],
     "files": ["./hardhat.config.ts"]
-  } */
+  } 

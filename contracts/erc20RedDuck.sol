@@ -12,7 +12,7 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
     string public name;  // название монеты
     string public symbol; // символ нашей монеты
     uint8 public decimals; // количество цифр после запятой
-    uint256 public coin_price; //текущая цена монеты
+    uint public coin_price; // wei за 1 олексириум
     uint16 public voting_duration; //время на голосование в минутах
     uint public voting_summ; //тут храним текущий результат голосования
     uint public voting_end; // время конца голосования
@@ -29,13 +29,13 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
      базовый конструктор erc20
 
      */
-    constructor() {
+    constructor(uint8 decimals_, uint totalSupply_, uint coin_price_, uint16 voting_duration_) {
         name = "Oleksiirium";
         symbol = "Olx";
-        decimals = 18;
-        _totalSupply = 1000;
-        coin_price = 5;
-        voting_duration = 50;
+        decimals = decimals_;
+        _totalSupply = totalSupply_;
+        coin_price = coin_price_;
+        voting_duration = voting_duration_;
 
         balances[msg.sender] = _totalSupply;
         emit Transfer(address(0), msg.sender, _totalSupply);
@@ -44,6 +44,10 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
 
     function totalSupply() public view returns (uint) {
         return _totalSupply  - balances[address(0)];
+    }
+
+    function CurrentCoinPrice() external view returns (uint){
+        return coin_price;
     }
 
     function balanceOf(address tokenOwner) public view returns (uint balance) {
@@ -75,11 +79,13 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
         balances[from] = safeSub(balances[from], tokens);
         allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
+
         emit Transfer(from, to, tokens);
+        
         return true;
     }
 
-    function callvote(uint new_price) public returns (bool success) {
+    function callvoting(uint new_price) public returns (bool success) {
         require(balances[msg.sender] >= _totalSupply/20, "Your balance is too low to start voiting."); //чтобы вызвать голосование надо хотя бы 5 процентов от эмиссии
         require(voting_end < block.timestamp, "Another voting is already started"); //проверяем, нет ли уже запущенного голосования
 
@@ -115,22 +121,22 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
     }
 
     function buy() external payable {
-        uint256 _cost = msg.value * coin_price; // сколько олексириума стоит отправленный эфир 
+        uint256 _cost = msg.value / coin_price; // сколько олексириума стоит отправленный эфир 
         if(_cost > balances[owner]){
-            payable(msg.sender).transfer(msg.value); // если на нашем кошельке недостаточно денег чтобы оплатить покупку - возвращаем эфир отправителю
+            revert("Cannot sell Oleksiirium for now"); // если на нашем кошельке недостаточно денег чтобы оплатить покупку - возвращаем эфир отправителю
         }
-        else transfer(msg.sender, _cost); //отправляем олексииум покупателю по текущему курсу
+        else transfer(msg.sender, _cost); //отправляем олексириум покупателю по текущему курсу
     }
     
     function sell(uint256 _amount) external {
         require(_amount <= balances[msg.sender], "You don`t have this count of tokens"); 
-        balances[msg.sender] = safeSub(balances[msg.sender], _amount); // отнимаем с аккаунта олексириум, который продаёт пользователь
 
+        balances[msg.sender] = safeSub(balances[msg.sender], _amount); // отнимаем с аккаунта олексириум, который продаёт пользователь
         balances[address(this)] = safeAdd(balances[address(this)], _amount); //добавляем олексириум нам
 
         emit Transfer(msg.sender, address(this), _amount); //такие штуки надо записывать в блокчейн
         
-        payable(msg.sender).transfer(_amount * coin_price); //отправляем эфир по текущему курсу
+        payable(msg.sender).transfer(_amount / coin_price); //отправляем эфир по текущему курсу
     }
 
 
