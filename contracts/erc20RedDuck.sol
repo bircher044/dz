@@ -12,7 +12,7 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
     string public name;  // название монеты
     string public symbol; // символ нашей монеты
     uint8 public decimals; // количество цифр после запятой
-    uint public coin_price; // wei за 1 олексириум
+    uint public coin_price; // gwei за 1 олексириум
     uint16 public voting_duration; //время на голосование в минутах
     uint public voting_summ; //тут храним текущий результат голосования
     uint public voting_end; // время конца голосования
@@ -45,9 +45,17 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
     function totalSupply() public view returns (uint) {
         return _totalSupply  - balances[address(0)];
     }
+    
+    function getOwner() public view returns (address owner_){
+        return owner;
+    }
 
-    function CurrentCoinPrice() external view returns (uint){
+    function currentCoinPrice() public view returns (uint CoinPrice){
         return coin_price;
+    }
+
+    function votingDuration() public view returns (uint16 Voting_Duration){
+        return voting_duration;
     }
 
     function balanceOf(address tokenOwner) public view returns (uint balance) {
@@ -89,7 +97,7 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
         require(balances[msg.sender] >= _totalSupply/20, "Your balance is too low to start voiting."); //чтобы вызвать голосование надо хотя бы 5 процентов от эмиссии
         require(voting_end < block.timestamp, "Another voting is already started"); //проверяем, нет ли уже запущенного голосования
 
-        voting_end = block.timestamp + voting_duration;  //последняя минута голосования
+        voting_end = block.timestamp + (voting_duration * 60);  //последняя секунда голосования
         voting_summ = 0; //при запуске голосования голоса обнуляем
         possible_price = new_price; // запоминаем за что голосуем
         voting_id++; //считаем текущий номер голосования
@@ -112,9 +120,8 @@ contract erc20RedDuck is ERC20Interface, SafeMath {
 
     function stopvoting() public returns (bool success){  //эту функцию вызываем мы сами с помощью ether.js ровно через 50 минут после начала голосования
         require(voting_end < block.timestamp, "The voting should stop later"); //не рано ли запустили (ну а вдруг)
-        require(msg.sender == owner, "You have not permission to stop voiting"); //никто кроме создателя останавливать не может
-
-        if(voting_summ >= 0 )  //если вес голосов "за" больше то меняем текущую цену монеты
+         //                                                                  //остановить голосование может любой, главное, чтобы прошло 50 минут (проверяем выше)
+        if(voting_summ > 0 )  //если вес голосов "за" больше то меняем текущую цену монеты
         coin_price = possible_price;
         
         return true;
