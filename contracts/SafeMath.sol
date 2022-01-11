@@ -28,5 +28,4 @@ contract SafeMath {
         
         c = a / b;
     }
-    
 }
