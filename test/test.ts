@@ -21,44 +21,41 @@ describe("erc20RedDuck contract", async () => {
   let contract : Contract;
   
   let totalSupply : BigNumber;
+  let availableSupply : BigNumber;
   let coinPrice : BigNumber;
   let votingDuration : BigNumber;
+  let decimals : BigNumber;
 
-  let firstWallet : Wallet;
-  let secondWallet : Wallet;
+  let testWallet : Wallet;
 
-  let contractWalletProviderBalance : BigNumber;
-  let contractWalletContractBalance : BigNumber;
-  let firstWalletProviderBalance : BigNumber;
-  let firstWalletContractBalance : BigNumber;
-  let secondWalletProviderBalance : BigNumber;
-  let secondWalletContractBalance : BigNumber;
+  let contractWallet_ProviderBalance : BigNumber;
+  let contractWallet_ContractBalance : BigNumber;
 
+  let testWallet_ProviderBalance : BigNumber;
+  let testWallet_ContractBalance : BigNumber;
 
 
-  beforeEach(async () => {
-    var firstWalletPrivateKey : string = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
-    var secondWalletPrivateKey : string = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
+  beforeEach( async () => {
 
-    firstWallet = new Wallet(firstWalletPrivateKey, ethers.provider);
-    secondWallet = new Wallet(secondWalletPrivateKey, ethers.provider);
+    const testWalletPrivateKey : string = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
-    var contractFactory : ContractFactory = await ethers.getContractFactory('erc20RedDuck');
+    testWallet = new Wallet(testWalletPrivateKey, ethers.provider);
+
+    let contractFactory : ContractFactory = await ethers.getContractFactory('erc20RedDuck');
     
     totalSupply = BigNumber.from(1000);
+    availableSupply = totalSupply;
     coinPrice = BigNumber.from(4500);
-    votingDuration = BigNumber.from(50);
+    votingDuration = BigNumber.from(3000);
+    decimals = BigNumber.from(18);
 
-    contract = await contractFactory.deploy(totalSupply, coinPrice, votingDuration);
+    contract = await contractFactory.deploy(decimals, totalSupply, coinPrice, votingDuration);
 
-    contractWalletProviderBalance = await ethers.provider.getBalance(contract.address);
-    contractWalletContractBalance = totalSupply;
+    contractWallet_ProviderBalance = await ethers.provider.getBalance(contract.address);
+    contractWallet_ContractBalance = totalSupply;
 
-    firstWalletProviderBalance = await ethers.provider.getBalance(firstWallet.address);
-    firstWalletContractBalance = BigNumber.from(0);
+    testWallet_ContractBalance = BigNumber.from(0);
 
-    secondWalletProviderBalance = await ethers.provider.getBalance(secondWallet.address);
-    secondWalletContractBalance = BigNumber.from(0);
   });
 
 
@@ -66,13 +63,13 @@ describe("erc20RedDuck contract", async () => {
 
 
 
-  describe('Deployment', async () => {
+  describe('Deployment', async () => {    //этот блок тестов отвечает за то, правильно ли развернулся контракт
 
-   // it('Should set right owner', async () => {
-   //   const responseOwnerAddress = await contract.getOwner();
-//
-  //    expect(responseOwnerAddress).to.equal(contract.address);
-  //n  });
+    it('Should set right owner', async () => {
+      const responseOwnerAddress = await contract.getOwner();
+
+      expect(responseOwnerAddress).to.equal(contract.address);  //contact.adress это всегда оwner. В принципе, ownera можно и не запоминать в контракте
+   });
 
     it('Should set right total supply', async () => {
       const responseTotalSupply = await contract.totalSupply();
@@ -81,13 +78,13 @@ describe("erc20RedDuck contract", async () => {
     });
 
     it('Should set right token rate', async() => {
-      const responseTokenRate = await contract.CurrentCoinPrice();
+      const responseTokenRate = await contract.currentCoinPrice();
 
       expect(responseTokenRate).to.equal(coinPrice);
     });
 
     it('Should signed total supply of tokens to the owner', async () => {
-      const responseOwnerBalance = await contract.balanceOf(contract.address);
+      const responseOwnerBalance = await contract.balanceOf(contract.address);     //в начале totalsupply должен быть у овнера
 
       expect(responseOwnerBalance).to.equal(totalSupply);
     }); 
@@ -100,138 +97,298 @@ describe("erc20RedDuck contract", async () => {
   });
 
 
+
+
+
+
+
+
+
   describe('Buy', async () => {
 
-    it('Should be bought', async () => {
+    beforeEach( async () => {
+
+      contractWallet_ProviderBalance = await ethers.provider.getBalance(contract.address); //ethers.provide.getBalance возвращает количество gwei на кошельке
+
+    });
+
+    afterEach( async () => {
+
+      const response_ContractWallet_ProviderBalance = await ethers.provider.getBalance(contract.address);    //баланс контракта (gwei) в нашем контракте
+      expect(response_ContractWallet_ProviderBalance).to.equal(contractWallet_ProviderBalance);  //сравниваем баланс контракта (gwei) в сети и в тестах
+ 
+    });
+
+
+    it('Should be bought', async () => { // проверяем "купится" ли токен при отправке gwei на контракте
+
       let override = {
         value : BigNumber.from(1000)
       };
 
-      await contract.connect(firstWallet).buy(override);
-      
-      firstWalletContractBalance = firstWalletContractBalance.add(await override.value.mul(coinPrice));
-      
-      expect(await contract.balanceOf(firstWallet.address)).to.equal(firstWalletContractBalance);
+      await contract.connect(testWallet).buy(override); // запускаем функцию buy, в которую с нашего тест кошелька отправляем gwei = .value
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice));
+      //добавляем на кошелёк покупателя
+      //целочисленное деление override.value на цену токена ( количество токенов которые получить купить покупатель)
+
+      contractWallet_ContractBalance = contractWallet_ContractBalance.sub(override.value.div(coinPrice));
+      //отнимаем от кошелька контракта
+      //целочисленное деление override.value на цену токена ( количество токенов которые получить купить покупатель)
+
+      contractWallet_ProviderBalance = contractWallet_ProviderBalance.add(override.value);
+      //добавляем на кошелёк контракта отправленный эфир
+
+    });
+
+    it('Should not be bought', async () => {
+
+      let override = {
+        value : availableSupply.add(1).mul(coinPrice)   //кошелёк пытается купить на 1 токен больше, чем доступно на контракте
+      };
+
+      await expect(contract.connect(testWallet).buy(override)).to.be.revertedWith('Cannot sell Oleksiirium for now'); 
+      //транзакция ревертнулась когда кошелёк попытался купить больше чем баланс контракта
+
     });
 
   });
 
-/*
-  describe('Transactions - transfer', () => {
-    afterEach(async () => {
-      expect(await contract.balanceOf(contract.address)).to.equal(contractWalletContractBalance);
+
+  describe('Sell', async () => {
+
+    it('Should be sold', async () => { // проверяем "продастся" ли токен при отправке токена на контракт
+
+      let override = {
+        value : BigNumber.from(45000)
+      };
+      await contract.connect(testWallet).buy(override);
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice)); //на тестовый кошелёк покупаем токены на 45000 gwei (должно получиться 10 olx по текущему курсу). Эти токены будем сейчас продавать
+
+      const tokensToSell = BigNumber.from(10);  
+
+      await contract.connect(testWallet).sell(tokensToSell); // запускаем функцию sell, в которую с нашего тест кошелька отправляем сколько хотим продать olx = 10
+
+      contractWallet_ContractBalance = contractWallet_ContractBalance.add(tokensToSell);
+      // добавляем на кошелёк контракта olx
+
+      testWallet_ContractBalance = testWallet_ContractBalance.sub(tokensToSell);
+      // отнимаем с кошелька продавца olx
+
+      expect(testWallet_ContractBalance).to.equal(await contract.balanceOf(testWallet.address));
+
+    });
+
+    it('Should not be sold', async () => { // проверяем отменится ли транзакция, если попытаться продать больше olx чем есть на балансе
+
+      let override = {
+        value : BigNumber.from(45000)
+      };
+      await contract.connect(testWallet).buy(override);
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice)); //на тестовый кошелёк покупаем токены на 45000 gwei (должно получиться 10 olx по текущему курсу). С этого кошелька продаём
+
+      const tokensToSell = BigNumber.from(11);  //будем продавать 11 (на кошельке 10)
+
+      await expect(contract.connect(testWallet).sell(tokensToSell)).to.be.revertedWith("You don`t have this count of tokens"); // при попытке продать 11, когда на кошельке 10, должно ревертнуть с этим текстом
+    });
+
+
+  });
+
+
+
+  describe('Callvote', async () => {
+    let possiblePrice : BigNumber;
+    let votingEnd : BigNumber;
+    let votingId : BigNumber;
+    let votingSumm : BigNumber;
+    let votingDuration : BigNumber;
+    let votingStatus : BigNumber;
+
+    beforeEach( async () => {
+
+       possiblePrice = BigNumber.from(5000);
+       votingDuration = BigNumber.from(3000);
+       votingId = BigNumber.from(1);
+       votingSumm = BigNumber.from(0);
+
+    });
+
+    it('Should not start voting because of low balance (<5%)', async () => {
+
+      let override = {
+        value : BigNumber.from(10000)
+      };
+
+      const possiblePrice = 5000;
+
+      await contract.connect(testWallet).buy(override);  
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice)); //на 10000 gwei покупаем olx (2 штуки)
+
+      await expect(contract.connect(testWallet).callvoting(possiblePrice)).to.be.revertedWith("Your balance is too low to start voiting.");  //ожидаем, что кошелёк с 2 olx на балансе не сможет запустить голосование
+
+    });
+
+    it('Should`t start voting when it has already started', async () => {
+
+      let override = {
+        value : BigNumber.from(225000) //4500 * 5%(1000) = 225000
+      };
+
+      await contract.connect(testWallet).buy(override);   //покупаем ровно 5 процентов от totalSupply
+      await contract.connect(testWallet).callvoting(possiblePrice); //запускаем голосование первый раз
+      
+      await expect(contract.connect(testWallet).callvoting(possiblePrice)).to.be.revertedWith("Another voting is already started"); //запускаем сразу же второе голосование (должно не запуститься)
+
+    });
+
+    it('Should call voting', async () => {
+
+      let override = {
+        value : BigNumber.from(225000) //4500 * 5%(1000) = 225000
+      };
+
+      await contract.connect(testWallet).buy(override);   //покупаем ровно 5 процентов от totalSupply
+      await contract.connect(testWallet).callvoting(possiblePrice); //вызываем callvote от нашего кошелька с балансом
+
+      let blockTimestamp : BigNumber = BigNumber.from((await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp); //время последнего блока
+      votingEnd = votingDuration.add(blockTimestamp); //конец это текущий блок плюс длина голосования
+
+       expect(await contract.possiblePrice()).to.be.equal(possiblePrice); //сравниваем изменился ли possible price
+       expect(await contract.votingStatus()).to.be.equal(true);           //сравниваем изменился ли статус голосования на true
+       expect(await contract.votingEnd()).to.be.equal(votingEnd);         //сравниваем изменился ли voting end
+       expect(await contract.votingId()).to.be.equal(votingId);           //сравниваем увеличился ли voting id
+       expect(await contract.votingSumm()).to.be.equal(votingSumm);       //сравниваем обнулился ли voting Summ
+
+    });
+
+  });
+
+
+  describe('vote', async () => {
+    let possiblePrice : BigNumber;
+    let votingSumm : BigNumber;
+    let decision : boolean;
+
+    beforeEach( async () => {
+
+       possiblePrice = BigNumber.from(5000);
+       votingSumm = BigNumber.from(0);
+       decision = true;
+
+    });
+
+    it('Should`t vote when voting has been finished or never started', async () => {
+
+      await expect(contract.connect(testWallet).vote(decision)).to.be.revertedWith("The voting has been ended or never started."); // пытаемся проголосовать, когда голосование никогда не начиналось
+
+    });
+
+    
+    it('Should vote', async () => {
+
+      let override = {
+        value : BigNumber.from(225000) //4500 * 5%(1000) = 225000
+      };
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice)); //баланс нашего кошелька (сила голоса)
+      await contract.connect(testWallet).buy(override);   //покупаем ровно 5 процентов от totalSupply
+
+      await contract.connect(testWallet).callvoting(possiblePrice); //вызываем callvote от нашего кошелька с балансом
+
+      await contract.connect(testWallet).vote(decision); //голосуем с этого кошелька
+
+      expect(await contract.votingSumm()).to.be.equal(testWallet_ContractBalance); //сравниваем сумму голосов в контракте с весом проголосовавшего
+
+    });
+
+    it('Should`t vote when this wallet already voted', async () => {
+      
+      let override = {
+        value : BigNumber.from(225000) //4500 * 5%(1000) = 225000
+      };
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice)); //баланс нашего кошелька (сила голоса)
+      await contract.connect(testWallet).buy(override);   //покупаем ровно 5 процентов от totalSupply
+
+      await contract.connect(testWallet).callvoting(possiblePrice); //вызываем callvote от нашего кошелька с балансом
+
+      await contract.connect(testWallet).vote(decision); //голосуем с этого кошелька
+
+      await expect(contract.connect(testWallet).vote(decision)).to.be.revertedWith("You have already voited."); //пытаемся проголосовать второй раз
+    });
+
+  });
+
+  describe('stopvoting', async () => {
+    let possiblePrice : BigNumber;
+    let votingSumm : BigNumber;
+    let decision : boolean;
+
+    it('Should`t stop voting when it`s too early', async () => {
+
+      possiblePrice = BigNumber.from(5000);
+       votingSumm = BigNumber.from(0);
+       decision = true;
+
+       let override = {
+        value : BigNumber.from(225000) //4500 * 5%(1000) = 225000
+      };
+
+      testWallet_ContractBalance = testWallet_ContractBalance.add(override.value.div(coinPrice)); //баланс нашего кошелька (сила голоса)
+      await contract.connect(testWallet).buy(override);   //покупаем ровно 5 процентов от totalSupply
+
+      await contract.connect(testWallet).callvoting(possiblePrice); //вызываем callvote от нашего кошелька с балансом
+
+      await contract.connect(testWallet).vote(decision); //голосуем с этого кошелька
+
+      await expect(contract.stopvoting()).to.be.revertedWith("The voting should stop later");
+
+    });
+
+    
+    it('Should stop voting', async () => {
+      let contractFactory : ContractFactory = await ethers.getContractFactory('erc20RedDuck');
+
+      contract = await contractFactory.deploy(decimals, totalSupply, coinPrice, 0); //запускаем наш контракт, только voting duration =
+
+      contractWallet_ProviderBalance = await ethers.provider.getBalance(contract.address);
+      contractWallet_ContractBalance = totalSupply;
   
-      expect(await contract.balanceOf(firstWallet.address)).to.equal(firstWalletContractBalance);
-  
-      expect(await contract.balanceOf(secondWallet.address)).to.equal(secondWalletContractBalance);
-    });
-    it('Should transfer tokens between account', async () =>{
-      await contract.transfer(firstWallet.address, 100);
-      firstWalletContractBalance = firstWalletContractBalance.add(100);
-      contractWalletContractBalance = contractWalletContractBalance.sub(100);
-      await contract.transfer(secondWallet.address, 150);
-      secondWalletContractBalance = secondWalletContractBalance.add(150);
-      contractWalletContractBalance = contractWalletContractBalance.sub(150);
-    });
-    it('Should fail if sender doesnt have enough tokens', async () =>{
-      await expect(contract.connect(firstWallet).transfer(secondWallet.address, firstWalletContractBalance.add(1))).to.be.revertedWith('Transfer amount exceeds balance');
-    });
-  });
-*/
+      testWallet_ContractBalance = BigNumber.from(0);
 
-/*
-  describe('Buy Action', () => {
-    it('Should be bought', async () =>{
-      const override =  {
-        value: 100
+      possiblePrice = BigNumber.from(5000);
+       votingSumm = BigNumber.from(0);
+       decision = true;
+
+       let override = {
+        value : BigNumber.from(225000) //4500 * 5%(1000) = 225000
       };
-      const amount = override.value * currentTokenRate;
-      await token.connect(Addr1).Buy(override);
-      addr1Balance += amount;
-      ownerBalance -= amount;
-      const responseAddr1Balance : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance).to.equal(addr1Balance);
-      const responseOwnerBalance : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance).to.equal(ownerBalance);
+      await contract.connect(testWallet).buy(override);   //покупаем ровно 5 процентов от totalSupply
+
+      await contract.connect(testWallet).callvoting(possiblePrice); //вызываем callvote от нашего кошелька с балансом
+
+      await contract.connect(testWallet).vote(decision); //голосуем с этого кошелька "за" изменение цены
+      await contract.stopvoting(); //остановка голосования
+
+      expect(await contract.currentCoinPrice()).to.be.equal(possiblePrice); 
+
+
     });
-    it('Shouldnt be bought if value is less or equal to 0', async() =>{
-      const override =  {
-        value: 0
-      };
-      await expect(token.connect(Addr1).Buy(override)).to.be.revertedWith('Value should be greater than 0');
-      const responseAddr1Balance : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance).to.equal(addr1Balance);
-      const responseOwnerBalance : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance).to.equal(ownerBalance);
-    }); 
-    it('Shouldnt be bought if value is greater than available supply', async() =>{
-      const override =  {
-        value: 1000000000000000
-      };
-      await expect(token.connect(Addr1).Buy(override)).to.be.revertedWith('Not enough available supply');
-      const responseAddr1Balance : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance).to.equal(addr1Balance);
-      const responseOwnerBalance : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance).to.equal(ownerBalance);
-    });
-  });
-  describe('Sell Action', () => {
-    it('Should be sold', async ()=>{
-      const amount : number = 100 * currentTokenRate;
-      await token.Transfer(addr1, amount);
-      addr1Balance += amount;
-      ownerBalance -= amount;
-      const responseAddr1Balance_afterTransferAction : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance_afterTransferAction).to.equal(addr1Balance);
-      const responseOwnerBalance_afterTransferAction : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance_afterTransferAction).to.equal(ownerBalance);
-      await token.connect(Addr1).Sell(amount);
-      addr1Balance -= amount;
-      ownerBalance += amount;
-      const responseAddr1Balance_afterSellAction : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance_afterSellAction).to.equal(addr1Balance);
-      const responseOwnerBalance_afterSellAction : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance_afterSellAction).to.equal(ownerBalance);
-    });
-    it('Shouldnt be sold if requested amount is less or equal to 0', async ()=>{
-      const amount : number = 0;
-      await expect(token.connect(Addr1).Sell(amount)).to.be.revertedWith('Requested amount should be greater than 0');
-      const responseAddr1Balance_afterSellAction : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance_afterSellAction).to.equal(addr1Balance);
-      const responseOwnerBalance_afterSellAction : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance_afterSellAction).to.equal(ownerBalance);
-    });
-    it('Shouldnt be sold if requested amount is greater than balance', async ()=>{
-      const amount : number = addr1Balance + 1;
-      await expect(token.connect(Addr1).Sell(amount)).to.be.revertedWith('Requested amount should be less or equal to your balance');
-      const responseAddr1Balance_afterSellAction : number = parseInt(await token.Balance(addr1));
-      expect(responseAddr1Balance_afterSellAction).to.equal(addr1Balance);
-      const responseOwnerBalance_afterSellAction : number = parseInt(await token.Balance(owner));
-      expect(responseOwnerBalance_afterSellAction).to.equal(ownerBalance);
-    });
-  });
-  describe('Change Token Rate', () => {
-    it('Should be changed', async() =>{
-      const newTokenRate = currentTokenRate + 1;
-      
-      await token.connect(Owner).ChangeTokenRate(newTokenRate);
-      currentTokenRate = newTokenRate;
-      const responseCurrentTokenRate = parseInt(await token.CurrentTokenRate());
-      expect(responseCurrentTokenRate).to.equal(currentTokenRate);
-    }); 
-    it('Shouldnt be changed if sender is not owner', async() =>{
-      const newTokenRate = currentTokenRate + 1;
-      
-      await expect(token.connect(Addr1).ChangeTokenRate(newTokenRate)).to.be.revertedWith('Only owner cant change token rate');
-      const responseCurrentTokenRate = parseInt(await token.CurrentTokenRate());
-      expect(responseCurrentTokenRate).to.equal(currentTokenRate);
-    }); 
-    it('Shouldnt be changed if new token rate is less or equal to 0', async() =>{
-      const newTokenRate = 0;
-      
-      await expect(token.connect(Owner).ChangeTokenRate(newTokenRate)).to.be.revertedWith('New token rate should be greater than 0');
-      const responseCurrentTokenRate = parseInt(await token.CurrentTokenRate());
-      expect(responseCurrentTokenRate).to.equal(currentTokenRate);
-    }); */
 
   });
+
+
+
+
+
+
+
+
+
+
+
+});
