@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="shortcut icon" href="#">
+    <script
+        src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+        type="application/javascript"
+    ></script>
+    <script
+        src="index.js"
+        type="application/javascript"
+    ></script>
+    <meta charset="utf-8">
+          <title>Horisontal line style</title>
+          <style>
+           hr {
+            border: none; 
+            background-color: black; 
+            color: red; 
+            height: 1px; 
+           }
+          </style>
+        
+        <p>
+        <style type="text/css"> 
+          button[name="run_script"] { 
+            border: none;
+            border-radius: 7px;
+            padding: 10px 25px;
+            background: #ff9900;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: white;
+          }
+          button[name="run_script"]:hover { 
+            background: #ff6600;
+          } 
+        </style>
+
+  </head>
+
+  <body>
+        <p>
+        <button type="button" name="buy" onclick="buy(buyAmount.value)">Buy OLX</button>
+
+        <b>Value Of Your Transaction (Etherium) </b><br>
+        <input type="number" size="40" id="buyAmount">
+
+
+        <hr>
+
+
+        <p>            
+        <button type="button" name="sell" onclick="sell(sellAmount.value)">Sell OLX</button>
+        <p>
+        <b>Amount Of Olx</b><br>
+        <input type="text" size="40" id="sellAmount"> 
+            
+        <hr>
+            
+        <hr>
+               
+        
+         <p>
+        <button type="button" name="run_script" onclick="transfer(transferAddress.value, transferAmount.value)">Transfer OLX</button>
+        </p>
+                  
+        <p>
+        <b>Address Of A Reciever</b><br>
+        <input type="text" size="40" id="transferAddress">
+                   
+        <p>
+        <b>Amount Of Olx</b><br>
+        <input type="number" size="40" id="transferAmount">
+                
+
+        <hr>
+                   
+                   
+        <p>
+        <button type="button" name="CallVoting" onclick="CallVoting(newPrice.value)">Call Voiting for Price Changing</button>
+        </p>
+        <p>
+        <b>New Token Price (Etherium)</b><br>
+        <input type="number" size="40" id="newPrice">
+
+
+        <hr> 
+                   
+        
+        <p>
+        <button type="button" name="vote" onclick="Vote(VoteCheckBox.value)">Vote for price Changing</button>
+        </p>
+        <p><input type="checkbox" id="VoteCheckBox" > Do you agree to change the price?</p>
+
+
+        <hr>
+                   
+        <p>
+        <button type="button" name="run_script" onclick="StopVoting()">Stop voting</button>
+        </p>
+        <hr>
+       
+  </body>
+</html>
+
+
+        
+          
+          
+
+          
+           
+        

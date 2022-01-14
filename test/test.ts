@@ -353,7 +353,7 @@ describe("erc20RedDuck contract", async () => {
     it('Should stop voting', async () => {
       let contractFactory : ContractFactory = await ethers.getContractFactory('erc20RedDuck');
 
-      contract = await contractFactory.deploy(decimals, totalSupply, coinPrice, 0); //запускаем наш контракт, только voting duration =
+      contract = await contractFactory.deploy(decimals, totalSupply, coinPrice, 0); //запускаем наш контракт, только voting duration = 0
 
       contractWallet_ProviderBalance = await ethers.provider.getBalance(contract.address);
       contractWallet_ContractBalance = totalSupply;
@@ -374,7 +374,7 @@ describe("erc20RedDuck contract", async () => {
       await contract.connect(testWallet).vote(decision); //голосуем с этого кошелька "за" изменение цены
       await contract.stopvoting(); //остановка голосования
 
-      expect(await contract.currentCoinPrice()).to.be.equal(possiblePrice); 
+      expect(await contract.currentCoinPrice()).to.be.equal(possiblePrice); //после остановки голосования должна изменится цена
 
 
     });
