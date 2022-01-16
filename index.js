@@ -329,6 +329,13 @@ contractAbi=[
   },
   {
     "inputs": [],
+    "name": "sellEverything",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "stopvoting",
     "outputs": [
       {

