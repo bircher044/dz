@@ -42,7 +42,8 @@
 
   <body>
         <p>
-        <button type="button" name="buy" onclick="buy(buyAmount.value)">Buy OLX</button>
+        <button type="button" name="run_script" onclick="buy(buyAmount.value)">Buy OLX</button>
+        <p></p>
 
         <b>Value Of Your Transaction (Etherium) </b><br>
         <input type="number" size="40" id="buyAmount">
@@ -52,12 +53,20 @@
 
 
         <p>            
-        <button type="button" name="sell" onclick="sell(sellAmount.value)">Sell OLX</button>
+        <button type="button" name="run_script" onclick="sell(sellAmount.value)">Sell OLX</button>
         <p>
         <b>Amount Of Olx</b><br>
         <input type="text" size="40" id="sellAmount"> 
             
         <hr>
+
+        <p>            
+          <button type="button" name="run_script" onclick="balance()">Your balance</button>
+          <p>
+          <b>Your Olx Balance</b><br>
+          <input type="text" size="40" id="OlxAmount"> 
+              
+          <hr>
             
         <hr>
                
@@ -79,7 +88,7 @@
                    
                    
         <p>
-        <button type="button" name="CallVoting" onclick="CallVoting(newPrice.value)">Call Voiting for Price Changing</button>
+        <button type="button" name="run_script" onclick="callvoting(newPrice.value)">Call Voiting for Price Changing</button>
         </p>
         <p>
         <b>New Token Price (Etherium)</b><br>
@@ -87,18 +96,28 @@
 
 
         <hr> 
+
+        <p>
+          <button type="button" name="run_script" onclick="possiblePrice()">Press To Get Possible Price</button>
+          </p>
+          <p>
+            <b>Current Possible Price</b><br>
+          <input type="number" size="40" id="possiblePriceBox">
+  
+  
+          <hr> 
                    
         
         <p>
-        <button type="button" name="vote" onclick="Vote(VoteCheckBox.value)">Vote for price Changing</button>
+        <button type="button" name="run_script" onclick="vote(VoteCheck.value)">Vote for price Changing</button>
         </p>
-        <p><input type="checkbox" id="VoteCheckBox" > Do you agree to change the price?</p>
-
+        <b>Yes - 1; No - 0.</b><br>
+        <input type="number" size="40" id="VoteCheck">
 
         <hr>
                    
         <p>
-        <button type="button" name="run_script" onclick="StopVoting()">Stop voting</button>
+        <button type="button" name="run_script" onclick="stopvoting()">Stop voting</button>
         </p>
         <hr>
        
