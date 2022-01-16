@@ -17,6 +17,10 @@ contractAbi=[
     "type": "constructor"
   },
   {
+    "stateMutability": "payable",
+    "type": "fallback"
+  },
+  {
     "inputs": [],
     "name": "attack",
     "outputs": [],
@@ -48,10 +52,6 @@ contractAbi=[
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ];
 
