@@ -27,7 +27,7 @@ contract MorarableMarketContract {
 
     uint256 public priceAuctionStep;
     uint256 public marketplaceFee;
-    address payable marketStorage; //кошелёк, куда будет идти комиссия
+    address payable public marketStorage; //кошелёк, куда будет идти комиссия
 
     uint256 auctionItemsCreated;
     uint256 sellItemsCreated;
