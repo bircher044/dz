@@ -27,6 +27,8 @@ contract MorarableMarketContract {
 
     uint256 public priceAuctionStep;
     uint256 public marketplaceFee;
+
+    address owner;
     address payable public marketStorage; //кошелёк, куда будет идти комиссия
 
     uint256 auctionItemsCreated;
@@ -34,6 +36,8 @@ contract MorarableMarketContract {
     
     mapping (uint256 => SellItem) itemsForSale;
     mapping (uint256 => AuctionItem) itemsForAuction;
+
+    mapping(address => bool) whitelistedAddresses;
 
     mapping (address => mapping (uint256 => bool)) activeItems;
 
@@ -51,6 +55,12 @@ contract MorarableMarketContract {
         priceAuctionStep = _priceAuctionStep;
         marketplaceFee = _marketplaceFee;
         marketStorage = payable(_marketStorage);
+        owner = address(this);
+    }
+
+    modifier OnlyContractOwner(){
+        require(msg.sender == owner, "You are not owner of the contract.");
+        _;
     }
 
     modifier OnlyItemOwner(address tokenAddress, uint256 tokenId){
@@ -80,6 +90,14 @@ contract MorarableMarketContract {
         _;
     }
 
+    function addUserToWhiteList(address _addressToWhitelist) public OnlyContractOwner {
+        whitelistedAddresses[_addressToWhitelist] = true;
+    }
+
+    function changeAddressStorage(address _newStorage) public OnlyContractOwner {
+        marketStorage = payable(_newStorage);
+    }
+    
     function addItemToMarket(
     uint256 tokenId, 
     address tokenAddress, 
