@@ -7,27 +7,36 @@ import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
 abstract contract ERC2981 is IERC2981, ERC165Storage {
 
-  bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
-  mapping(uint256 => address) receiver;
-  mapping(uint256 => uint256) royaltyPercentage;
+    uint8 royaltyPercentage;
 
-  constructor() {
+    address owner;
 
-    _registerInterface(_INTERFACE_ID_ERC2981);
+    mapping(uint256 => address) receiver;
 
-  }
+    constructor(uint8 _royaltyPercentage) {
+        royaltyPercentage = _royaltyPercentage;
+        owner = address(this);
 
-  function _setReceiver(uint256 _tokenId, address _address) internal {
-    receiver[_tokenId] = _address;
-  }
+        _registerInterface(_INTERFACE_ID_ERC2981);
+    }
 
-  function _setRoyaltyPercentage(uint256 _tokenId, uint256 _royaltyPercentage) internal {
-    royaltyPercentage[_tokenId] = _royaltyPercentage;
-  }
+    modifier OnlyContractOwner(){
+      require(msg.sender == owner, "You are not owner of the contract.");
+    _;
+    }
 
-  function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override(IERC2981) returns (address Receiver, uint256 royaltyAmount) {
-    Receiver = receiver[_tokenId];
-    royaltyAmount = (_salePrice/100)*(royaltyPercentage[_tokenId]);
-  }
+    function setReceiver(uint256 _tokenId, address _address) OnlyContractOwner public {
+        receiver[_tokenId] = _address;
+    }
+
+    function setRoyaltyPercentage(uint8 _royaltyPercentage) OnlyContractOwner public {
+        royaltyPercentage = _royaltyPercentage;
+    }
+
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override(IERC2981) returns (address Receiver, uint256 royaltyAmount) {
+        Receiver = receiver[_tokenId];
+        royaltyAmount = (_salePrice * royaltyPercentage) / 100;
+    }
 }

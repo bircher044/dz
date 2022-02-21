@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./Royalty.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -36,8 +37,6 @@ contract MorarableMarketContract {
     
     mapping (uint256 => SellItem) itemsForSale;
     mapping (uint256 => AuctionItem) itemsForAuction;
-
-    mapping(address => bool) whitelistedAddresses;
 
     mapping (address => mapping (uint256 => bool)) activeItems;
 
@@ -90,14 +89,12 @@ contract MorarableMarketContract {
         _;
     }
 
-    function addUserToWhiteList(address _addressToWhitelist) public OnlyContractOwner {
-        whitelistedAddresses[_addressToWhitelist] = true;
-    }
+
 
     function changeAddressStorage(address _newStorage) public OnlyContractOwner {
         marketStorage = payable(_newStorage);
     }
-    
+
     function addItemToMarket(
     uint256 tokenId, 
     address tokenAddress, 
