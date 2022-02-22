@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Royalty.sol";
-import "./WhiteList.sol";
+import "../modules/WhiteList.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -11,7 +11,7 @@ contract MorarableMarketContract {
     struct SellItem {
         uint256 tokenId;
         address tokenAddress;
-        address payable seller;
+        address seller;
         uint256 requiredPrice;
         bool isOnSale;
     }
@@ -19,12 +19,14 @@ contract MorarableMarketContract {
     struct AuctionItem{
         uint256 tokenId;
         address tokenAddress;
-        address payable seller;
+        address seller;
         uint256 startPrice;
-        address payable currentBider;
+        address currentBider;
         uint256 currentBid;
         bool isOnAuction;
         bool hasBid;
+        bool hasTopPrice;
+        uint256 topPrice;
     }
 
     uint256 public priceAuctionStep;
@@ -106,11 +108,7 @@ contract MorarableMarketContract {
         activeItems[tokenAddress][tokenId] = true;
         sellItemsCreated++;
 
-        itemsForSale[sellItemsCreated].tokenId = tokenId;
-        itemsForSale[sellItemsCreated].tokenAddress = tokenAddress;
-        itemsForSale[sellItemsCreated].seller = payable(msg.sender);
-        itemsForSale[sellItemsCreated].requiredPrice = requiredPrice;
-        itemsForSale[sellItemsCreated].isOnSale = true;
+        itemsForSale[sellItemsCreated] = SellItem(tokenId, tokenAddress, msg.sender, requiredPrice, true);
 
         emit itemSellAdded(tokenId, tokenAddress, requiredPrice, msg.sender);
         return sellItemsCreated;
@@ -152,7 +150,9 @@ contract MorarableMarketContract {
     function addItemToAuction(
     uint256 tokenId, 
     address tokenAddress, 
-    uint256 startPrice
+    uint256 startPrice,
+    bool hasTopPrice,
+    uint256 topPrice
     ) 
     OnlyItemOwner(tokenAddress, tokenId) 
     HasTransferApproval(tokenAddress, tokenId) 
@@ -160,12 +160,7 @@ contract MorarableMarketContract {
     external returns (uint256){
         activeItems[tokenAddress][tokenId] = true;
         auctionItemsCreated++;
-
-        itemsForAuction[auctionItemsCreated].tokenId = tokenId;
-        itemsForAuction[auctionItemsCreated].tokenAddress = tokenAddress;
-        itemsForAuction[auctionItemsCreated].startPrice = startPrice;
-        itemsForAuction[auctionItemsCreated].isOnAuction = true;
-        itemsForAuction[auctionItemsCreated].seller = payable(msg.sender);
+        itemsForAuction[auctionItemsCreated] = AuctionItem(tokenId, tokenAddress, msg.sender, startPrice, address(0), 0, true, false, hasTopPrice, topPrice);
 
         emit itemAuctionAdded(tokenId, tokenAddress, startPrice, msg.sender);
         return auctionItemsCreated;
@@ -220,11 +215,11 @@ contract MorarableMarketContract {
         uint256 royaltyValue;
         uint256 whitelistValue;
 
-        Royalty royalty = new Royalty(2);
-        (tokenOwner, royaltyValue) = royalty.royaltyInfo(itemsForSale[id].tokenId, msg.value);
+        //ERC2981 royalty = new ERC2981();
+      //  (tokenOwner, royaltyValue) = Royalty.royaltyInfo(itemsForSale[id].tokenId, msg.value);
 
-        WhiteList whitelist = new WhiteList(2);
-        whitelistValue = whitelist.whitelistFee(tokenOwner, msg.value);
+        //WhiteList whitelist = new WhiteList(2);
+      //  whitelistValue = whitelist.whitelistFee(tokenOwner, msg.value);
 
         payable(tokenOwner).transfer(royaltyValue + whitelistValue);
         payable(marketStorage).transfer(msg.value * marketplaceFee / 100);
