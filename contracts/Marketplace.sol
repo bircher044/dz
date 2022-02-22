@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Royalty.sol";
+import "./WhiteList.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -20,8 +21,8 @@ contract MorarableMarketContract {
         address tokenAddress;
         address payable seller;
         uint256 startPrice;
-        uint256 currentBid;
         address payable currentBider;
+        uint256 currentBid;
         bool isOnAuction;
         bool hasBid;
     }
@@ -30,7 +31,7 @@ contract MorarableMarketContract {
     uint256 public marketplaceFee;
 
     address owner;
-    address payable public marketStorage; //кошелёк, куда будет идти комиссия
+    address public marketStorage; //кошелёк, куда будет идти комиссия
 
     uint256 auctionItemsCreated;
     uint256 sellItemsCreated;
@@ -53,7 +54,7 @@ contract MorarableMarketContract {
     constructor(uint256 _priceAuctionStep, uint256 _marketplaceFee, address _marketStorage){
         priceAuctionStep = _priceAuctionStep;
         marketplaceFee = _marketplaceFee;
-        marketStorage = payable(_marketStorage);
+        marketStorage = _marketStorage;
         owner = address(this);
     }
 
@@ -88,8 +89,6 @@ contract MorarableMarketContract {
         require(itemsForAuction[id].isOnAuction, "Not on auction");
         _;
     }
-
-
 
     function changeAddressStorage(address _newStorage) public OnlyContractOwner {
         marketStorage = payable(_newStorage);
@@ -128,10 +127,10 @@ contract MorarableMarketContract {
 
         itemsForSale[id].isOnSale = false;
         activeItems[itemsForSale[id].tokenAddress][itemsForSale[id].tokenId] = false;
-
+        
+        payFees(id, itemsForSale[id].seller);
         IERC721(itemsForSale[id].tokenAddress).safeTransferFrom(itemsForSale[id].seller, msg.sender, itemsForSale[id].tokenId);
-        itemsForSale[id].seller.transfer(msg.value * (100 - marketplaceFee) / 100);
-        marketStorage.transfer((msg.value * marketplaceFee) / 100);
+
 
         emit itemSellSold(id, msg.sender, itemsForSale[id].requiredPrice);
     }
@@ -199,9 +198,7 @@ contract MorarableMarketContract {
     HasTransferApproval(itemsForAuction[id].tokenAddress, itemsForAuction[id].tokenId)
     public returns (bool){
         if(itemsForAuction[id].hasBid){
-            payable(itemsForAuction[id].seller).transfer(itemsForAuction[id].currentBid * (100 - marketplaceFee) / 100);
-            payable(marketStorage).transfer((itemsForAuction[id].currentBid * marketplaceFee) / 100);
-
+            payFees(id, itemsForAuction[id].seller);
             IERC721(itemsForAuction[id].tokenAddress).safeTransferFrom(itemsForAuction[id].seller, itemsForAuction[id].currentBider, itemsForAuction[id].tokenId);
 
             emit itemAuctionSold(itemsForAuction[id].tokenId, itemsForAuction[id].tokenAddress, itemsForAuction[id].currentBid, itemsForAuction[id].seller, itemsForAuction[id].currentBider);
@@ -212,6 +209,26 @@ contract MorarableMarketContract {
         activeItems[itemsForAuction[id].tokenAddress][itemsForAuction[id].tokenId] = false;
         
         return true;
+    }
+
+    function payFees(
+        uint256 id,
+        address seller
+    )
+    internal{
+        address tokenOwner;
+        uint256 royaltyValue;
+        uint256 whitelistValue;
+
+        Royalty royalty = new Royalty(2);
+        (tokenOwner, royaltyValue) = royalty.royaltyInfo(itemsForSale[id].tokenId, msg.value);
+
+        WhiteList whitelist = new WhiteList(2);
+        whitelistValue = whitelist.whitelistFee(tokenOwner, msg.value);
+
+        payable(tokenOwner).transfer(royaltyValue + whitelistValue);
+        payable(marketStorage).transfer(msg.value * marketplaceFee / 100);
+        payable(seller).transfer(msg.value - royaltyValue - whitelistValue - msg.value * marketplaceFee / 100);
     }
 
 }

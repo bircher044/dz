@@ -2,7 +2,9 @@
 
 pragma solidity >=0.8.0;
 
-abstract contract WhiteList {
+import "@openzeppelin/contracts/interfaces/IERC2981.sol";
+
+abstract contract WhiteList is IERC2981 {
 
     uint8 whiteListPercentage;
 
@@ -25,6 +27,6 @@ abstract contract WhiteList {
     }
 
     function whitelistFee(address member, uint256 sale_price) external view returns (uint256) {
-        return whitelistedAddresses[member] ? (sale_price * whiteListPercentage) / 100 : 0;
+        return whitelistedAddresses[member] ? sale_price * whiteListPercentage / 100 : 0;
     }
 }
