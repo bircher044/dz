@@ -29,6 +29,13 @@ contract MorarableMarketContract {
         uint256 topPrice;
     }
 
+    struct HistoryItem{
+        address seller;
+        address newOwner;
+        bool isAuction; //false - sell, true - auction
+        uint256 finalPrice;
+    }
+
     uint256 public priceAuctionStep;
     uint256 public marketplaceFee;
 
@@ -42,6 +49,9 @@ contract MorarableMarketContract {
     
     mapping(uint256 => SellItem) public itemsForSale;
     mapping(uint256 => AuctionItem) public itemsForAuction;
+
+    mapping(uint256 => mapping (uint256 => HistoryItem)) public itemsHistory;
+    mapping(uint256 => uint256) public historyEventCount; // tokenId => numberOfEvents
 
     mapping(address => mapping (uint256 => bool)) activeItems;
 
@@ -242,5 +252,15 @@ contract MorarableMarketContract {
         return true;
     }
 
+    function getTokenStatistic(
+        uint256 tokenId,
+        uint256 eventId
+    )
+    public view returns (address seller, address newOwner, bool isAuction, uint256 finalPrice){
+        seller = itemsHistory[tokenId][eventId].seller;
+        newOwner = itemsHistory[tokenId][eventId].newOwner;
+        isAuction = itemsHistory[tokenId][eventId].isAuction;
+        finalPrice = itemsHistory[tokenId][eventId].finalPrice;
+    }
 
 }

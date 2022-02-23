@@ -14,6 +14,7 @@ contract MorarableToken is ERC721 {
         uint256 id;
         address creator;
         string uri;
+        uint256 timecreated;
     }
 
     mapping (uint256 => Item) public Items;
@@ -23,7 +24,7 @@ contract MorarableToken is ERC721 {
         uint256 newItemId = _tokenIds.current();
         _safeMint(msg.sender, newItemId);
 
-        Items[newItemId] = Item(newItemId, msg.sender, uri);
+        Items[newItemId] = Item(newItemId, msg.sender, uri, block.timestamp);
 
         return newItemId;
     }
