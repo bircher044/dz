@@ -37,11 +37,13 @@ contract MorarableMarketContract {
 
     uint256 auctionItemsCreated;
     uint256 sellItemsCreated;
-    
-    mapping (uint256 => SellItem) itemsForSale;
-    mapping (uint256 => AuctionItem) itemsForAuction;
 
-    mapping (address => mapping (uint256 => bool)) activeItems;
+    mapping(address => uint256) public balances;
+    
+    mapping(uint256 => SellItem) public itemsForSale;
+    mapping(uint256 => AuctionItem) public itemsForAuction;
+
+    mapping(address => mapping (uint256 => bool)) activeItems;
 
     event itemSellAdded(uint256 tokenId, address tokenAddress, uint256 requiredPrice, address seller);
     event itemSellSold(uint256 id, address buyer, uint256 askingPrice);
@@ -52,6 +54,7 @@ contract MorarableMarketContract {
     event itemAuctionSold(uint256 tokenId, address tokenAddress, uint256 finalPrice, address seller, address buyer);
     event itemAuctionRemoved(uint256 tokenId, address tokenAddress, address seller);
 
+    event balanceWithdraw(address withdrawer, uint256 transactionValue, uint256 balanceAvailable);
 
     constructor(uint256 _priceAuctionStep, uint256 _marketplaceFee, address _marketStorage){
         priceAuctionStep = _priceAuctionStep;
@@ -221,9 +224,23 @@ contract MorarableMarketContract {
         //WhiteList whitelist = new WhiteList(2);
       //  whitelistValue = whitelist.whitelistFee(tokenOwner, msg.value);
 
-        payable(tokenOwner).transfer(royaltyValue + whitelistValue);
-        payable(marketStorage).transfer(msg.value * marketplaceFee / 100);
-        payable(seller).transfer(msg.value - royaltyValue - whitelistValue - msg.value * marketplaceFee / 100);
+        balances[tokenOwner] += royaltyValue + whitelistValue;
+        balances[marketStorage] += msg.value * marketplaceFee / 100;
+        balances[seller] += msg.value - royaltyValue - whitelistValue - msg.value * marketplaceFee / 100;
     }
+
+    function withdraw(
+        uint256 value
+    ) 
+    public returns (bool){
+        require(balances[msg.sender] >= value, "Your balance is 0.");
+
+        balances[msg.sender] -= value;
+        payable(msg.sender).transfer(value);
+
+        emit balanceWithdraw(msg.sender, value, balances[msg.sender]);
+        return true;
+    }
+
 
 }
