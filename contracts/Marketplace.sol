@@ -109,6 +109,16 @@ contract MorarableMarketContract {
         marketStorage = payable(_newStorage);
     }
 
+    function changeMarketplaceFee(
+        uint8 newValue
+    )
+    OnlyContractOwner
+    public returns (bool){
+        marketplaceFee = newValue;
+        
+        return true;
+    }
+
     function addItemToMarket(
     uint256 tokenId, 
     address tokenAddress, 
@@ -252,15 +262,5 @@ contract MorarableMarketContract {
         return true;
     }
 
-    function getTokenStatistic(
-        uint256 tokenId,
-        uint256 eventId
-    )
-    public view returns (address seller, address newOwner, bool isAuction, uint256 finalPrice){
-        seller = itemsHistory[tokenId][eventId].seller;
-        newOwner = itemsHistory[tokenId][eventId].newOwner;
-        isAuction = itemsHistory[tokenId][eventId].isAuction;
-        finalPrice = itemsHistory[tokenId][eventId].finalPrice;
-    }
 
 }
