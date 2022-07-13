@@ -58,11 +58,6 @@ describe("erc20RedDuck contract", async () => {
 
   });
 
-
-  
-
-
-
   describe('Deployment', async () => {    //этот блок тестов отвечает за то, правильно ли развернулся контракт
 
     it('Should set right owner', async () => {
@@ -88,27 +83,12 @@ describe("erc20RedDuck contract", async () => {
 
       expect(responseOwnerBalance).to.equal(totalSupply);
     }); 
-
-    it('Should set right voting duration', async() => {
-      const responseVotingDuration = await contract.votingDuration();
-
-      expect(responseVotingDuration).to.equal(votingDuration);
-    });
   });
-
+dsdfs
 
 
 
   });
 
-
-
-
-
-
-
-
-
-something new
 
 });
