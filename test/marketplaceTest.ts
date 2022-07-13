@@ -84,7 +84,7 @@ describe("erc20RedDuck contract", async () => {
       expect(responseOwnerBalance).to.equal(totalSupply);
     }); 
   });
-dsdfs
+dsdfsdsfdfs
 
 
 
