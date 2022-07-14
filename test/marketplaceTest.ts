@@ -16,7 +16,7 @@ type WalletData = {
   contract : ContractData;
 }
 
-describe("erc20RedDuck contract", async () => {
+describe("Marketplace contract", async () => {
 
   let contract : Contract;
   
@@ -84,8 +84,6 @@ describe("erc20RedDuck contract", async () => {
       expect(responseOwnerBalance).to.equal(totalSupply);
     }); 
   });
-dsdfsdsfdfs
-
 
 
   });

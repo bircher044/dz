@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Royalty.sol";
-import "../modules/WhiteList.sol";
+//import "../modules/WhiteList.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -178,7 +178,7 @@ contract MorarableMarketContract {
     uint256 topPrice
     ) 
     OnlyItemOwner(tokenAddress, tokenId) 
-    HasTransferApproval(tokenAddress, tokenId) 
+    HasTransferApproval(tokenAddress, tokenId)  
     NotOnSale(tokenAddress, tokenId)
     external returns (uint256){
         activeItems[tokenAddress][tokenId] = true;
